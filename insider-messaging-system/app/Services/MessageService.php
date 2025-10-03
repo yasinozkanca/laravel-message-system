@@ -142,30 +142,47 @@ class MessageService implements MessageServiceInterface
 
     public function processMessageSending(): void
     {
-        $pendingMessages = $this->getPendingMessages(2);
-
-        foreach ($pendingMessages as $message) {
-            try {
-                $result = $this->sendMessage($message);
-                
-                if (!$result['success']) {
-                    Log::warning('Message sending failed', [
-                        'message_id' => $message->id,
-                        'error' => $result['error'] ?? 'Unknown error'
-                    ]);
-                }
-                
-            } catch (\Exception $e) {
-                Log::error('Exception during message sending', [
-                    'message_id' => $message->id,
-                    'error' => $e->getMessage()
-                ]);
-                
-                $message->markAsFailed();
+        $totalProcessed = 0;
+        $batchSize = 2; // Process 2 messages at a time
+        
+        do {
+            $pendingMessages = $this->getPendingMessages($batchSize);
+            
+            if ($pendingMessages->isEmpty()) {
+                break;
             }
             
-            sleep(2.5);
-        }
+            foreach ($pendingMessages as $message) {
+                try {
+                    $result = $this->sendMessage($message);
+                    
+                    if (!$result['success']) {
+                        Log::warning('Message sending failed', [
+                            'message_id' => $message->id,
+                            'error' => $result['error'] ?? 'Unknown error'
+                        ]);
+                    } else {
+                        $totalProcessed++;
+                    }
+                    
+                } catch (\Exception $e) {
+                    Log::error('Exception during message sending', [
+                        'message_id' => $message->id,
+                        'error' => $e->getMessage()
+                    ]);
+                    
+                    $message->markAsFailed();
+                }
+                
+                // Rate limiting: 2 messages every 5 seconds
+                sleep(2.5);
+            }
+            
+        } while ($pendingMessages->count() === $batchSize);
+        
+        Log::info('Message processing completed', [
+            'total_processed' => $totalProcessed
+        ]);
     }
 
     public function createMessage(array $data): Message
