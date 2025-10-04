@@ -34,6 +34,7 @@ docker-compose up -d
 docker-compose exec app composer install
 docker-compose exec app php artisan key:generate
 docker-compose exec app php artisan migrate
+docker-compose exec app php artisan migrate:fresh --seed # For generating messages
 docker-compose exec app php artisan l5-swagger:generate
 ```
 
@@ -59,7 +60,13 @@ curl -X POST http://localhost:8000/api/messages \
   -d '{"content": "Test message", "phone_number": "+1234567890"}'
 ```
 
+# Manual message processing
+```bash
+docker-compose exec app php artisan messages:send
+```
+
 ## Testing
+
 
 ```bash
 docker-compose exec app php artisan test
@@ -76,10 +83,8 @@ docker-compose down
 
 # Restart services
 docker-compose restart app
-
-# Manual message processing
-docker-compose exec app php artisan messages:send
 ```
+
 
 ## Architecture
 
