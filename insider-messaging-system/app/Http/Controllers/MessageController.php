@@ -127,7 +127,7 @@ class MessageController extends Controller
      *         )
      *     ),
      *     @OA\Response(
-     *         response=202,
+     *         response=201,
      *         description="Message created successfully",
      *         @OA\JsonContent(
      *             @OA\Property(property="success", type="boolean", example=true),
