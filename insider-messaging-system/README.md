@@ -1,74 +1,91 @@
-# Message Sending System
+# Insider Messaging System
 
-Laravel-based bulk message sending system with queue processing and webhook integration.
+A Laravel-based message sending system with Redis queue processing and webhook integration.
 
 ## Features
 
-- Bulk message sending with rate limiting
-- Queue-based background processing
-- Redis caching
-- RESTful API
-- Swagger documentation
-- Webhook integration
+- RESTful API with Swagger documentation
+- Redis caching and queue processing
+- Docker containerization
+- Rate-limited message sending (2 messages per 5 seconds)
+- Background job processing
 
 ## Requirements
 
-- PHP 8.2+
-- Composer
-- MySQL 5.7+
-- Redis
-- Laravel 10.x
+- Docker
+- Docker Compose
 
-## Installation
+## Setup
 
+1. **Clone the repository**
+```bash
+git clone git@github.com:yasinozkanca/laravel-message-system.git
+cd insider-messaging-system
+```
+
+2. **Build and start containers**
+```bash
 docker-compose build
+docker-compose up -d
+```
 
-## Configuration
+3. **Initialize application**
+```bash
+docker-compose exec app composer install
+docker-compose exec app php artisan key:generate
+docker-compose exec app php artisan migrate
+docker-compose exec app php artisan l5-swagger:generate
+```
 
-Update `.env`:
-
-```env
-
-DB_CONNECTION=mysql
-DB_HOST=db
-DB_PORT=3306
-DB_DATABASE=messaging_system
-DB_USERNAME=messaging_user
-DB_PASSWORD=password
-
-REDIS_HOST=redis
-REDIS_PASSWORD=null
-REDIS_PORT=6379
-REDIS_CLIENT=predis
-
-WEBHOOK_URL=https://webhook.site/0102047c-2680-4c44-9a0f-f9d947053257
-WEBHOOK_AUTH_KEY=INS.me1x9uMcyYG1hKKQVPoc.b03j9aZwRTOCA2Ywo
+4. **Start queue worker**
+```bash
+docker-compose up -d queue
 ```
 
 ## Usage
 
-First, build the docker then follow the bash commands.
+**Access the application:**
+- API: `http://localhost:8000`
+- Swagger Documentation: `http://localhost:8000/api/documentation`
 
-## Docker
-
-```bash
-docker-compose up -d
-docker-compose exec app composer install
-docker-compose exec app php artisan migrate
-docker-compose exec app php artisan key:generate
-
-docker-compose exec app php artisan messages:send # for manually triggering messaging service
-```
-
-API endpoints:
+**API Endpoints:**
 - `GET /api/messages` - List sent messages
-- `POST /api/messages` - Create message
+- `POST /api/messages` - Create new message
 
-Swagger docs: `http://localhost:8000/api/documentation`
+**Test the API:**
+```bash
+curl -X POST http://localhost:8000/api/messages \
+  -H "Content-Type: application/json" \
+  -d '{"content": "Test message", "phone_number": "+1234567890"}'
+```
 
 ## Testing
 
 ```bash
-php artisan test
+docker-compose exec app php artisan test
 ```
+
+## Common Commands
+
+```bash
+# View logs
+docker-compose logs app
+
+# Stop services
+docker-compose down
+
+# Restart services
+docker-compose restart app
+
+# Manual message processing
+docker-compose exec app php artisan messages:send
+```
+
+## Architecture
+
+- **App Container**: Laravel application
+- **Nginx Container**: Web server
+- **Database Container**: MySQL 8.0
+- **Redis Container**: Cache and queue
+- **Queue Container**: Background job processor
 
